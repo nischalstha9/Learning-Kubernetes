@@ -16,6 +16,17 @@ spec:
     spec:
       containers:
       - name: base-django-deployment
-        image: django_base_web:latest
+        image: nischalstha/django_base_web:latest
+        command: [ "python", "manage.py", "runserver", "0.0.0.0:8000" ]
         ports:
-        - containerPort: 8002
+        - containerPort: 8000
+        envFrom:
+        - secretRef:
+            name: base-django-secrets
+        resources:
+          requests:
+            memory: "450Mi"
+            cpu: "900m"
+          limits:
+            memory: "500Mi"
+            cpu: "1000m"

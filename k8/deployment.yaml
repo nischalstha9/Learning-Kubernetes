@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: base-django-deployment
+  labels:
+    app: base-django-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: base-django-deployment
+  template:
+    metadata:
+      labels:
+        app: base-django-deployment
+    spec:
+      containers:
+      - name: base-django-deployment
+        image: django_base_web:latest
+        ports:
+        - containerPort: 8002

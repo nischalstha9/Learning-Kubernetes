@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: base-django-ingress
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+  # defaultBackend:
+spec:
+  defaultBackend:
+  rules:
+  - host: admin.django.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: django-base-service
+            port:
+              number: 8000

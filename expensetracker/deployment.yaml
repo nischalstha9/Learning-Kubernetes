@@ -1,36 +1,37 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: base-django
-  name: base-django-deployment
+  namespace: expense-tracker
+  name: expense-tracker-deployment
   labels:
-    app: base-django-deployment
+    app: expense-tracker-deployment
 spec:
-  replicas: 10
+  replicas: 1
   selector:
     matchLabels:
-      app: base-django-deployment
+      app: expense-tracker-deployment
   template:
     metadata:
       labels:
-        app: base-django-deployment
+        app: expense-tracker-deployment
     spec:
       containers:
-      - name: base-django-deployment
-        image: nischalstha/django_base_web:latest
-        command: [ "python", "manage.py", "runserver", "0.0.0.0:8000" ]
+      - name: expense-tracker-deployment
+        image: nischalstha/expense_tracker_web
+        # command: [ "python", "manage.py", "runserver", "0.0.0.0:8000" ]
+        command: ["sh", "/code/docker-entrypoint.sh" ]
         ports:
         - containerPort: 8000
         envFrom:
         - secretRef:
-            name: base-django-secrets
+            name: expense-tracker-secrets
         resources:
           requests:
             memory: "450Mi"
-            cpu: "900m"
+            cpu: "0.45"
           limits:
             memory: "500Mi"
-            cpu: "1000m"
+            cpu: "0.5"
 
 # ---
 
@@ -43,7 +44,7 @@ spec:
 #   scaleTargetRef:
 #     apiVersion: apps/v1
 #     kind: Deployment
-#     name: base-django-deployment
+#     name: expense-tracker-deployment
 #   minReplicas: 1
 #   maxReplicas: 10
 #   targetCPUUtilizationPercentage: 50

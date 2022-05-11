@@ -2,6 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: base-django-ingress
+  namespace: base-django
   annotations:
     kubernetes.io/ingress.class: "traefik"
     # nginx.ingress.kubernetes.io/rewrite-target: /

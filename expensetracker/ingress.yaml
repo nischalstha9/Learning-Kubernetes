@@ -43,11 +43,12 @@ spec:
             name: expense-tracker-service
             port:
               number: 8000
-      - path: "/static/" # doesnot work because of frontend static path # can be solved by changing STATIC_URL in django settings.py
-        pathType: Prefix
-        backend:
-          service:
-            name: expense-tracker-service
-            port:
-              number: 8000
+      #it only works in build from naxa templates as there is no static path 
+      # - path: "/static/" # doesnot work because of frontend static path # can be solved by changing STATIC_URL in django settings.py
+      #   pathType: Prefix
+      #   backend:
+      #     service:
+      #       name: expense-tracker-service
+      #       port:
+      #         number: 8000
   

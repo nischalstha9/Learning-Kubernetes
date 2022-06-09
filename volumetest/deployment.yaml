@@ -33,26 +33,10 @@ spec:
             cpu: "1000m"
         volumeMounts:
         - mountPath: /code/media
-          name: MediaVolumeBaseDjango
+          name: postgres-volume
       volumes:
-      - name: MediaVolumeBaseDjango
+      - name: postgres-volume
         # This AWS EBS volume must already exist.
         awsElasticBlockStore:
           volumeID: "vol-044f99536c6a5ab9f"
           fsType: ext4
-
-# ---
-
-# apiVersion: autoscaling/v1
-# kind: HorizontalPodAutoscaler
-# metadata:
-#   name: base-django-autoscaler
-#   namespace: base-django
-# spec:
-#   scaleTargetRef:
-#     apiVersion: apps/v1
-#     kind: Deployment
-#     name: base-django-deployment
-#   minReplicas: 1
-#   maxReplicas: 10
-#   targetCPUUtilizationPercentage: 50

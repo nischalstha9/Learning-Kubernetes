@@ -1,0 +1,153 @@
+
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: nginx-deployment
+  labels:
+    name: nginx-deployment
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nginx-config-maps
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-server-1
+  nfs:
+    server: 3.111.157.23
+    path: "/home/ubuntu/NFS/volume/nginx/sites-enabled"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nginx-sites
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-server-1-sites
+  nfs:
+    server: 3.111.157.23
+    path: "/home/ubuntu/NFS/volume/nginx/sites"
+# ---
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: nfs-server-1-backups
+# spec:
+#   capacity:
+#     storage: 200Mi
+#   accessModes:
+#     - ReadWriteMany
+#   storageClassName: nfs-backup-1
+#   nfs:
+#     server: 3.111.157.23
+#     path: "/home/ubuntu/NFS/backup"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nginx-config-claim
+  namespace: nginx-deployment
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-server-1
+  resources:
+    requests:
+      storage: 200Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nginx-sites-claim
+  namespace: nginx-deployment
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-server-1-sites
+  resources:
+    requests:
+      storage: 200Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  namespace: nginx-deployment
+  labels:
+    app: nginx-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx-deployment
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment
+    spec:
+      containers:
+      - name: nginx-deployment
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        resources:
+          # requests:
+          #   memory: "100Mi"
+          #   cpu: "0.1"
+          limits:
+            memory: "200Mi"
+            cpu: "0.1"
+        volumeMounts:
+        - mountPath: /etc/nginx/sites-enabled
+          name: nginx-site-configs
+        - mountPath: /data
+          name: nginx-sites
+      volumes:
+      - name: nginx-site-configs
+        persistentVolumeClaim:
+          claimName: nginx-config-claim
+      - name: nginx-sites
+        persistentVolumeClaim:
+          claimName: nginx-sites-claim
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+  namespace: nginx-deployment
+spec:
+  selector:
+    app: nginx-deployment
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress
+  namespace: nginx-deployment
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: nginx.shrestha-nischal.com.np
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx-service
+            port:
+              number: 80

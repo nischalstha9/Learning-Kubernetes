@@ -10,11 +10,11 @@ metadata:
 spec:
   replicas: 1
   revisionHistoryLimit: 5
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 50%
-      maxUnavailable: 50%
+  # strategy:
+  #   type: RollingUpdate
+  #   rollingUpdate:
+  #     maxSurge: 50%
+  #     maxUnavailable: 50%
   selector:
     matchLabels:
       app: expense-tracker-deployment
@@ -32,26 +32,26 @@ spec:
         envFrom:
         - secretRef:
             name: expense-tracker-secrets
-        resources:
-          requests:
-            memory: "450Mi"
-            cpu: "0.45"
-          limits:
-            memory: "500Mi"
-            cpu: "0.5"
-        readinessProbe:
-          httpGet:
-            path: /admin/
-            port: 8000
-          initialDelaySeconds: 30
-          periodSeconds: 20
-        livenessProbe:
-          httpGet:
-            path: /admin/
-            port: 8000
-          initialDelaySeconds: 30
-          periodSeconds: 120
-          timeoutSeconds: 10
+        # resources:
+        #   requests:
+        #     memory: "450Mi"
+        #     cpu: "0.45"
+        #   limits:
+        #     memory: "500Mi"
+        #     cpu: "0.5"
+        # readinessProbe:
+        #   httpGet:
+        #     path: /admin/
+        #     port: 8000
+        #   initialDelaySeconds: 30
+        #   periodSeconds: 20
+        # livenessProbe:
+        #   httpGet:
+        #     path: /
+        #     port: 8000
+        #   initialDelaySeconds: 15
+        #   periodSeconds: 120
+
 ---
 
 apiVersion: apps/v1
@@ -66,11 +66,11 @@ metadata:
 spec:
   replicas: 1
   revisionHistoryLimit: 5
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
+  # strategy:
+  #   type: RollingUpdate
+  #   rollingUpdate:
+  #     maxSurge: 1
+  #     maxUnavailable: 1
   selector:
     matchLabels:
       app: expense-tracker-celery-deployment
@@ -88,33 +88,33 @@ spec:
         envFrom:
         - secretRef:
             name: expense-tracker-secrets
-        resources:
-          requests:
-            memory: "450Mi"
-            cpu: "0.45"
-          limits:
-            memory: "500Mi"
-            cpu: "0.5"
-        readinessProbe:
-            exec:
-              command:
-                [
-                  "python",
-                  "-c",
-                  '"import os;from celery.app.control import Inspect;from api import celery_app;exit(0 if os.environ[''HOSTNAME''] in '',''.join(Inspect(app=celery_app).stats().keys()) else 1)"',
-                ]
-            initialDelaySeconds: 120
-            periodSeconds: 300
-        livenessProbe:
-          exec:
-            command:
-              [
-                "python",
-                "-c",
-                '"import os;from celery.app.control import Inspect;from api import celery_app;exit(0 if os.environ[''HOSTNAME''] in '',''.join(Inspect(app=celery_app).stats().keys()) else 1)"',
-              ]
-          initialDelaySeconds: 120
-          periodSeconds: 300
+        # resources:
+        #   requests:
+        #     memory: "450Mi"
+        #     cpu: "0.45"
+        #   limits:
+        #     memory: "500Mi"
+        #     cpu: "0.5"
+        # readinessProbe:
+        #     exec:
+        #       command:
+        #         [
+        #           "python",
+        #           "-c",
+        #           '"import os;from celery.app.control import Inspect;from api import celery_app;exit(0 if os.environ[''HOSTNAME''] in '',''.join(Inspect(app=celery_app).stats().keys()) else 1)"',
+        #         ]
+        #     initialDelaySeconds: 120
+        #     periodSeconds: 300
+        # livenessProbe:
+        #   exec:
+        #     command:
+        #       [
+        #         "python",
+        #         "-c",
+        #         '"import os;from celery.app.control import Inspect;from api import celery_app;exit(0 if os.environ[''HOSTNAME''] in '',''.join(Inspect(app=celery_app).stats().keys()) else 1)"',
+        #       ]
+        #   initialDelaySeconds: 120
+        #   periodSeconds: 300
 
 # ---
 
@@ -130,4 +130,4 @@ spec:
 #     name: expense-tracker-deployment
 #   minReplicas: 1
 #   maxReplicas: 10
-#   targetCPUUtilizationPercentage: 75
+#   targetCPUUtilizationPercentage: 50

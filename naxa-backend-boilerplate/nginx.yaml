@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  namespace: expense-tracker
+  labels:
+    app: nginx-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-deployment
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment
+    spec:
+      containers:
+      - name: nginx-deployment
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /etc/nginx/conf.d
+          name: nginx-site-configs
+        - mountPath: /data
+          name: nginx-sites
+      volumes:
+      - name: nginx-site-configs
+        persistentVolumeClaim:
+          claimName: nginx-config-claim
+      - name: nginx-sites
+        persistentVolumeClaim:
+          claimName: nginx-sites-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+  namespace: expense-tracker
+spec:
+  type: LoadBalancer
+  selector:
+    app: nginx-deployment
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 443

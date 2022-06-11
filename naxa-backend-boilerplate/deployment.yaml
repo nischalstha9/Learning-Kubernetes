@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: naxa-backend
+  name: naxa-backend-deployment
+  labels:
+    app: naxa-backend-deployment
+  annotations:
+    kubernetes.io/change-cause: Trying kubernetes deployment for web change cause 1
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 2
+  selector:
+    matchLabels:
+      app: naxa-backend-deployment
+  template:
+    metadata:
+      labels:
+        app: naxa-backend-deployment
+    spec:
+      containers:
+      - name: naxa-backend-deployment
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+            # ephemeral-storage: 2Gi
+          limits:
+            cpu: 220m
+            memory: 512Mi
+            # ephemeral-storage: 2.5Gi
+        image: nischalstha/naxa-backend-boilerplate:v0.1
+        command: ["sh", "/code/entrypoint.sh" ]
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - secretRef:
+            name: naxa-backend-secrets
+        volumeMounts:
+        - mountPath: /code/static
+          name: static-files
+        - mountPath: /code/media
+          name: media-files
+      volumes:
+      - name: static-files
+        persistentVolumeClaim:
+          claimName: naxa-backend-static-files
+      - name: media-files
+        persistentVolumeClaim:
+          claimName: naxa-backend-media-files
+# ---
+# apiVersion: autoscaling/v1
+# kind: HorizontalPodAutoscaler
+# metadata:
+#   name: base-django-autoscaler
+#   namespace: base-django
+# spec:
+#   scaleTargetRef:
+#     apiVersion: apps/v1
+#     kind: Deployment
+#     name: base-django-deployment
+#   minReplicas: 1
+#   maxReplicas: 10
+#   targetCPUUtilizationPercentage: 50%

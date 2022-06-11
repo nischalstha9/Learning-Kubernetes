@@ -1,0 +1,65 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: expandable-storage-class
+parameters:
+  type: pd-standard
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+provisioner: kubernetes.io/gce-pd
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: naxa-backend-static
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: expandable-storage-class
+  nfs:
+    server: 3.111.157.23
+    path: /srv/ElasticVolume/naxa-backend/static
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: naxa-backend-static-files
+  namespace: naxa-backend
+spec:
+  claimRef: null
+  accessModes:
+    - ReadWriteMany
+  storageClassName: expandable-storage-class
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: naxa-backend-media
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: expandable-storage-class
+  nfs:
+    server: 3.111.157.23
+    path: /srv/ElasticVolume/naxa-backend/media
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: naxa-backend-media-files
+  namespace: naxa-backend
+spec:
+  claimRef: null
+  accessModes:
+    - ReadWriteMany
+  storageClassName: expandable-storage-class
+  resources:
+    requests:
+      storage: 1Gi

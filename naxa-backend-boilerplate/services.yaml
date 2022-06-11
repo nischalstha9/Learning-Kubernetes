@@ -1,0 +1,13 @@
+#internal Service to connect to different pods
+apiVersion: v1
+kind: Service
+metadata:
+  name: naxa-backend-service
+  namespace: naxa-backend
+spec:
+  selector:
+    app: naxa-backend-deployment
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000

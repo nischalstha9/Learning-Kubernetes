@@ -8,7 +8,7 @@ metadata:
   annotations:
     kubernetes.io/change-cause: Trying kubernetes deployment for web change cause 1
 spec:
-  replicas: 2
+  replicas: 1
   revisionHistoryLimit: 5
   strategy:
     type: RollingUpdate

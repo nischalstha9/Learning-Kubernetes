@@ -1,0 +1,206 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: private-registry
+  labels:
+    name: private-registry
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: private-registry-secrets
+  namespace: private-registry
+type: Opaque
+stringData:
+  REGISTRY_AUTH: htpasswd
+  REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+  REGISTRY_AUTH_HTPASSWD_REALM: Registry Realm
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: registry-storage
+spec:
+  capacity:
+    storage: 5.2Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: expandable-storage-class
+  nfs:
+    server: 3.111.157.23
+    path: /srv/ElasticVolume/kube_docker_registry
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: private-registry-auth-conf
+  namespace: private-registry
+data:
+  htpasswd: |
+    devops:$2y$05$SNAi/Lj/3q5mIQTD69TozOSQkXCPxkcyGp3fI8sIxN8Ef.CWvuPYe
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: private-registry-config
+  namespace: private-registry
+data:
+  config.yml: |
+    version: 0.1
+    log:
+      fields:
+        service: registry
+    storage:
+      cache:
+        blobdescriptor: inmemory
+      filesystem:
+        rootdirectory: /var/lib/registry
+    http:
+      addr: :5000
+      secret: asecretforlocaldevelopment
+      headers:
+        X-Content-Type-Options: [nosniff]
+    health:
+      storagedriver:
+        enabled: true
+        interval: 10s
+        threshold: 3
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: registry-storage-claim
+  namespace: private-registry
+spec:
+  storageClassName: expandable-storage-class
+  claimRef: null
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: private-registry
+  name: private-registry-deployment
+  labels:
+    app: private-registry-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: private-registry-deployment
+  template:
+    metadata:
+      labels:
+        app: private-registry-deployment
+    spec:
+      containers:
+      - name: private-registry-deployment
+        image: registry:2
+        ports:
+        - containerPort: 5000
+        envFrom:
+        - secretRef:
+            name: private-registry-secrets
+        resources:
+          requests:
+            memory: "450Mi"
+            cpu: "200m"
+          limits:
+            memory: "500Mi"
+            cpu: "250m"
+        volumeMounts:
+        - mountPath: /var/lib/registry
+          name: registry-volume
+        - mountPath: /auth
+          readOnly: true
+          name: registry-basic-auth-volume
+        - mountPath: /etc/docker/registry
+          name: registry-config-volume
+      volumes:
+      - name: registry-volume
+        persistentVolumeClaim:
+          claimName: registry-storage-claim
+      - name: registry-basic-auth-volume
+        configMap:
+          name: private-registry-auth-conf
+          items:
+            - key: htpasswd
+              path: htpasswd
+      - name: registry-config-volume
+        configMap:
+          name: private-registry-config
+          items:
+            - key: config.yml
+              path: config.yml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: private-registry-service
+  namespace: private-registry
+spec:
+  selector:
+    app: private-registry-deployment
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: private-registry-service
+  namespace: private-registry
+spec:
+  type: LoadBalancer
+  selector:
+    app: private-registry-deployment
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+      nodePort: 30000
+---
+# apiVersion: traefik.containo.us/v1alpha1
+# kind: Middleware
+# metadata:
+#   name: redirect-https
+# spec:
+#   redirectScheme:
+#     scheme: https
+#     permanent: true
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: private-registry-ingress
+#   namespace: private-registry
+#   annotations:
+#     kubernetes.io/ingress.class: "traefik"
+#     # ingress.kubernetes.io/force-ssl-redirect: "true"
+#     # ingress.kubernetes.io/ssl-redirect: "true"
+#     # traefik.ingress.kubernetes.io/router.tls: "true"
+#     # traefik.ingress.kubernetes.io/router.middlewares: default-redirect-https@kubernetescrd #dont work
+#     # traefik.ingress.kubernetes.io/buffering: |
+#     #   maxrequestbodybytes: 5368709120
+# spec:
+#   tls:
+#     - secretName: private-registry-tls-secret
+#       hosts: 
+#         - "dockerhub.naxa.com.np"
+#   rules:
+#   - host: dockerhub.naxa.com.np
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: private-registry-service
+#             port:
+#               number: 5000
+  
